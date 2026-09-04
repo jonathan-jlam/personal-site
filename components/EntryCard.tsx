@@ -1,7 +1,7 @@
 import Link from "next/link";
-import type { Entry } from "@/lib/entries";
+import type { EntryMeta } from "@/lib/entries";
 
-const dotColor: Record<Entry["type"], string> = {
+const dotColor: Record<EntryMeta["type"], string> = {
   coding: "bg-muted",
   music: "bg-[#a8543a]",
   learning: "bg-accent",
@@ -15,7 +15,7 @@ function formatDate(iso: string) {
   });
 }
 
-export default function EntryCard({ entry }: { entry: Entry }) {
+export default function EntryCard({ entry }: { entry: EntryMeta }) {
   return (
     <Link
       href={`/entries/${entry.slug}`}

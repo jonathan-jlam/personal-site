@@ -1,5 +1,5 @@
 import EntryCard from "@/components/EntryCard";
-import { entries, type EntryType } from "@/lib/entries";
+import { getAllEntries, type EntryType } from "@/lib/entries";
 
 const intro: Record<"all" | EntryType, string> = {
   all: "A running log of things I'm up to. Written mostly for future me.",
@@ -8,7 +8,8 @@ const intro: Record<"all" | EntryType, string> = {
   learning: "Things I'm learning.",
 };
 
-export default function EntryList({ filter }: { filter?: EntryType }) {
+export default async function EntryList({ filter }: { filter?: EntryType }) {
+  const entries = getAllEntries();
   const list = filter ? entries.filter((e) => e.type === filter) : entries;
 
   return (
