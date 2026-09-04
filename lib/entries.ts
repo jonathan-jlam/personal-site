@@ -10,7 +10,7 @@ export type EntryMeta = {
   date: string;
   title: string;
   excerpt: string;
-  series?: string;
+    series?: string;
   seriesTitle?: string;
 };
 
@@ -53,7 +53,11 @@ function readEntryFile(filename: string): Entry {
 }
 
 function getAllSlugsFromDisk(): string[] {
-  if (!fs.existsSync(ENTRIES_DIR)) return [];
+  if (!fs.existsSync(ENTRIES_DIR)) {
+    throw new Error(
+      `content/entries directory not found at "${ENTRIES_DIR}".`
+    );
+  }
   return fs
     .readdirSync(ENTRIES_DIR)
     .filter((f) => f.endsWith(".mdx"))
@@ -94,10 +98,9 @@ export function getSeriesContext(entry: EntryMeta): SeriesContext | null {
 
   const siblings = getAllEntries()
     .filter((e) => e.series === entry.series)
-      .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 
-  if (siblings.length < 2) 
-    return null;
+  if (siblings.length < 2) return null;
 
   const currentIndex = siblings.findIndex((e) => e.slug === entry.slug);
   if (currentIndex === -1) return null;
