@@ -1,8 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MDXRemote } from "next-mdx-remote/rsc";
-import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { getAllSlugs, getEntry, getSeriesContext } from "@/lib/entries";
@@ -107,11 +105,7 @@ export default async function EntryPage({
       )}
 
       <div className="mt-4 space-y-4 text-sm leading-relaxed text-ink/90">
-        <MDXRemote
-          source={entry.content}
-          components={mdxComponents}
-          options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }}
-        />
+        <entry.Content components={mdxComponents} />
       </div>
 
       {series && (
