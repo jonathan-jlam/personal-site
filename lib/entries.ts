@@ -1,6 +1,11 @@
-import fs from "fs";
-import path from "path";
-import matter from "gray-matter";
+// This module is a plain `import`, not a filesystem read. This is to avoid CloudFlare
+// errors where reading from disk is challenging.
+// Actual content lives in lib/generated-entries.json, which scripts/build-content.mjs
+// generates from content/entries/ before every `next build` 
+// Because it's a normal JS import, the bundler always includes it 
+// there's nothing for Cloudflare to search for at request time.
+// Basically moving the generation of the entries from request to build time.
+import generatedEntries from "./generated-entries.json";
 
 export type EntryType = "coding" | "music" | "learning";
 
@@ -10,78 +15,32 @@ export type EntryMeta = {
   date: string;
   title: string;
   excerpt: string;
-    series?: string;
+  series?: string;
   seriesTitle?: string;
 };
 
-export type Entry = EntryMeta & { content: string };
+// `html` is pre-rendered, sanitized-at-build-time markup (see build-content.mjs).
+export type Entry = EntryMeta & { html: string };
 
-const ENTRIES_DIR = path.join(process.cwd(), "content", "entries");
+type GeneratedEntry = EntryMeta & { html: string };
 
-function assertEntryType(value: unknown, slug: string): EntryType {
-  if (value === "coding" || value === "music" || value === "learning") {
-    return value;
-  }
-  throw new Error(
-    `Entry "${slug}" has an invalid or missing "type" in its frontmatter (got: ${String(value)}). Expected one of: coding, music, learning.`
-  );
-}
+const ALL_ENTRIES = generatedEntries as GeneratedEntry[];
 
-function readEntryFile(filename: string): Entry {
-  const slug = filename.replace(/\.mdx$/, "");
-  const fullPath = path.join(ENTRIES_DIR, filename);
-  const raw = fs.readFileSync(fullPath, "utf8");
-  const { data, content } = matter(raw);
-
-  if (!data.title) {
-    throw new Error(`Entry "${slug}" is missing a "title" in its frontmatter.`);
-  }
-  if (!data.date) {
-    throw new Error(`Entry "${slug}" is missing a "date" in its frontmatter.`);
-  }
-
-  return {
-    slug,
-    type: assertEntryType(data.type, slug),
-    date: String(data.date),
-    title: String(data.title),
-    excerpt: data.excerpt ? String(data.excerpt) : "",
-    series: data.series ? String(data.series) : undefined,
-    seriesTitle: data.seriesTitle ? String(data.seriesTitle) : undefined,
-    content,
-  };
-}
-
-function getAllSlugsFromDisk(): string[] {
-  if (!fs.existsSync(ENTRIES_DIR)) {
-    throw new Error(
-      `content/entries directory not found at "${ENTRIES_DIR}".`
-    );
-  }
-  return fs
-    .readdirSync(ENTRIES_DIR)
-    .filter((f) => f.endsWith(".mdx"))
-    .map((f) => f.replace(/\.mdx$/, ""));
-}
-
-// All entries, sorted in date desc
+// All entries sorted date desc 
 export function getAllEntries(): EntryMeta[] {
-  return getAllSlugsFromDisk()
-    .map((slug) => readEntryFile(`${slug}.mdx`))
+  return [...ALL_ENTRIES]
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
-    .map(({ content: _content, ...meta }) => meta);
+    .map(({ html: _html, ...meta }) => meta);
 }
 
 // All entry slugs, for generateStaticParams
 export function getAllSlugs(): string[] {
-  return getAllSlugsFromDisk();
+  return ALL_ENTRIES.map((e) => e.slug);
 }
 
-// A single entry, including raw MDX body content
+// A single entry, including its pre-rendered HTML body
 export function getEntry(slug: string): Entry | null {
-  const filename = `${slug}.mdx`;
-  if (!fs.existsSync(path.join(ENTRIES_DIR, filename))) return null;
-  return readEntryFile(filename);
+  return ALL_ENTRIES.find((e) => e.slug === slug) ?? null;
 }
 
 export type SeriesContext = {

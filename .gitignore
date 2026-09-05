@@ -15,6 +15,9 @@
 /.next/
 /out/
 
+# generated at build/dev time by scripts/build-content.mjs — see lib/entries.ts
+/lib/generated-entries.json
+
 # production
 /build
 

@@ -8,4 +8,3 @@ seriesTitle: "LeetCode DP Practice"
 ---
 
 First try! like 18 mins. haven't done LC in a while so struggled to come up with the intuition. But soon saw that we have no need to consider any subarray with a negative sum. Initially thought that there was going to be some sub-problem computation due to th DP tag.. but should've asked myself "are we concerned with HOW(combinations, decisions) we get the answer?" -- and the answer to that is no. We are looking for a subarray, we do not care how that subarray is composed/mid point, etc.
-Test!
