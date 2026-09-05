@@ -1,6 +1,12 @@
-import fs from "fs";
-import path from "path";
-import matter from "gray-matter";
+// Runtime-safe entry API.
+//
+// NOTE: there is deliberately no `fs`, `path`, or `gray-matter` import in this
+// file. All disk access happens in scripts/build-content.mjs at build time.
+// This module only reads the generated, bundled data - which is why it works
+// inside a Cloudflare Worker, where no filesystem exists.
+
+import { entryMeta, entryModules } from "./entries.generated";
+import type { MDXEntryComponent } from "./entries.generated";
 
 export type EntryType = "coding" | "music" | "learning";
 
@@ -10,78 +16,36 @@ export type EntryMeta = {
   date: string;
   title: string;
   excerpt: string;
-    series?: string;
+  series?: string;
   seriesTitle?: string;
 };
 
-export type Entry = EntryMeta & { content: string };
-
-const ENTRIES_DIR = path.join(process.cwd(), "content", "entries");
-
-function assertEntryType(value: unknown, slug: string): EntryType {
-  if (value === "coding" || value === "music" || value === "learning") {
-    return value;
-  }
-  throw new Error(
-    `Entry "${slug}" has an invalid or missing "type" in its frontmatter (got: ${String(value)}). Expected one of: coding, music, learning.`
-  );
-}
-
-function readEntryFile(filename: string): Entry {
-  const slug = filename.replace(/\.mdx$/, "");
-  const fullPath = path.join(ENTRIES_DIR, filename);
-  const raw = fs.readFileSync(fullPath, "utf8");
-  const { data, content } = matter(raw);
-
-  if (!data.title) {
-    throw new Error(`Entry "${slug}" is missing a "title" in its frontmatter.`);
-  }
-  if (!data.date) {
-    throw new Error(`Entry "${slug}" is missing a "date" in its frontmatter.`);
-  }
-
-  return {
-    slug,
-    type: assertEntryType(data.type, slug),
-    date: String(data.date),
-    title: String(data.title),
-    excerpt: data.excerpt ? String(data.excerpt) : "",
-    series: data.series ? String(data.series) : undefined,
-    seriesTitle: data.seriesTitle ? String(data.seriesTitle) : undefined,
-    content,
-  };
-}
-
-function getAllSlugsFromDisk(): string[] {
-  if (!fs.existsSync(ENTRIES_DIR)) {
-    throw new Error(
-      `content/entries directory not found at "${ENTRIES_DIR}".`
-    );
-  }
-  return fs
-    .readdirSync(ENTRIES_DIR)
-    .filter((f) => f.endsWith(".mdx"))
-    .map((f) => f.replace(/\.mdx$/, ""));
-}
-
 // All entries, sorted in date desc
 export function getAllEntries(): EntryMeta[] {
-  return getAllSlugsFromDisk()
-    .map((slug) => readEntryFile(`${slug}.mdx`))
-    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
-    .map(({ content: _content, ...meta }) => meta);
+  return [...entryMeta].sort((a, b) =>
+    a.date < b.date ? 1 : a.date > b.date ? -1 : 0
+  );
 }
 
 // All entry slugs, for generateStaticParams
 export function getAllSlugs(): string[] {
-  return getAllSlugsFromDisk();
+  return entryMeta.map((e) => e.slug);
 }
 
-// A single entry, including raw MDX body content
-export function getEntry(slug: string): Entry | null {
-  const filename = `${slug}.mdx`;
-  if (!fs.existsSync(path.join(ENTRIES_DIR, filename))) return null;
-  return readEntryFile(filename);
+// Metadata for a single entry
+export function getEntry(slug: string): EntryMeta | null {
+  return entryMeta.find((e) => e.slug === slug) ?? null;
+}
+
+// The compiled MDX component for a single entry.
+// Compilation happened at build time; this is just a module import.
+export async function getEntryContent(
+  slug: string
+): Promise<MDXEntryComponent | null> {
+  const loader = entryModules[slug];
+  if (!loader) return null;
+  const mod = await loader();
+  return mod.default;
 }
 
 export type SeriesContext = {
