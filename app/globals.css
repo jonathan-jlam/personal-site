@@ -1,0 +1,133 @@
+@import "tailwindcss";
+
+:root {
+  --background: #faf9f6;
+  --ink: #1a1a18;
+  --muted: #6e6c64;
+  --accent: #2e5339;
+  --accent-soft: #e4ebe3;
+  --line: #e3e1d9;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-line: var(--line);
+  --font-sans: var(--font-plex-sans);
+  --font-mono: var(--font-plex-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--ink);
+  font-family: var(--font-plex-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+a {
+  text-underline-offset: 3px;
+}
+
+/* visible keyboard focus everywhere */
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Entry body: HTML pre-rendered at build time from Markdown
+   (see scripts/build-content.mjs). rehype-pretty-code output is styled
+   here to match the previous react-syntax-highlighter look. */
+.prose-entry :where(h1, h2, h3, h4) {
+  font-weight: 500;
+  color: var(--ink);
+  margin-top: 1.5em;
+}
+
+.prose-entry :where(ul, ol) {
+  padding-left: 1.25em;
+}
+
+.prose-entry ul {
+  list-style: disc;
+}
+
+.prose-entry ol {
+  list-style: decimal;
+}
+
+.prose-entry a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.prose-entry code {
+  font-family: var(--font-plex-mono);
+  font-size: 0.8em;
+}
+
+.prose-entry :not(pre) > code {
+  background: var(--accent-soft);
+  border-radius: 0.25rem;
+  padding: 0.1em 0.35em;
+}
+
+.prose-entry [data-rehype-pretty-code-figure] {
+  margin: 0;
+}
+
+.prose-entry [data-rehype-pretty-code-figure] pre {
+  margin: 0;
+  border-radius: 0.75rem;
+  font-size: 0.75rem;
+  padding: 1rem 1rem 1rem 0;
+  overflow-x: auto;
+}
+
+.prose-entry [data-rehype-pretty-code-figure] code {
+  counter-reset: line;
+  display: grid;
+}
+
+.prose-entry [data-rehype-pretty-code-figure] code [data-line] {
+  counter-increment: line;
+  padding-left: 1rem;
+}
+
+.prose-entry [data-rehype-pretty-code-figure] code [data-line]::before {
+  content: counter(line);
+  display: inline-block;
+  width: 1.5rem;
+  margin-right: 1rem;
+  text-align: right;
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
